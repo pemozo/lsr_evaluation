@@ -23,6 +23,12 @@ def parse_args():
     )
     parser.add_argument("--repeat_times", type=int, default=1)
     parser.add_argument("--graph_size", type=int, default=1000)
+    parser.add_argument(
+        "--data_path",
+        type=str,
+        default=None,
+        help="Path to the evaluation dataset. Defaults to data/cluster/tsp{graph_size}_test_concorde.txt",
+    )
     parser.add_argument("--frag_len", type=int, default=200, help="Sub-problem size")
     parser.add_argument(
         "--max_new_cities",
@@ -59,7 +65,7 @@ def main(args):
     model.load_state_dict(ckpt["state_dict"])
     rl_solver = RLSolver(model.low_level_model, frag_len)
 
-    data_file = f"data/cluster/tsp{graph_size}_test_concorde.txt"
+    data_file = args.data_path or f"data/cluster/tsp{graph_size}_test_concorde.txt"
     data = readDataFile(data_file)
     sample_nums = data.shape[0]
     if args.data_augment:
