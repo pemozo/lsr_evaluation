@@ -1,2 +1,14 @@
 "H-TSP/checkpoints/h-tsp-ckpts.zip"
 "H-TSP/datasets/h-tsp-datasets.zip"
+
+# Large local artifacts
+checkpoints/
+datasets/
+data/
+**/checkpoints/
+**/datasets/
+**/data/
+*.ckpt
+*.pt
+*.pth
+*.pkl
