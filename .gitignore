@@ -12,3 +12,8 @@ data/
 *.pt
 *.pth
 *.pkl
+
+# Local HPC/Slurm files
+H-TSP/run_htsp.slurm
+slurm_logs/
+**/slurm_logs/
