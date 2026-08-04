@@ -28,8 +28,6 @@ PROJECT_DIR="${SLURM_SUBMIT_DIR}"
 CODE_DIR="${PROJECT_DIR}/Code"
 DATASET_DIR="${PROJECT_DIR}/datasets/HTSP/htsp_datasets"
 CHECKPOINT_DIR="${PROJECT_DIR}/checkpoints/HTSP/h-tsp-ckpt"
-LOG_DIR="${PROJECT_DIR}/logs"
-OUTPUT_DIR="${PROJECT_DIR}/outputs"
 SLURM_LOG_DIR="${PROJECT_DIR}/slurm_logs"
 
 IMAGE="/beegfs/zoghian/containers/htsp_apptainer.sif"
@@ -59,11 +57,7 @@ LOWER_CHECKPOINT_HOST="${CHECKPOINT_DIR}/${LOWER_CHECKPOINT_RELATIVE}"
 
 RUN_NAME="htsp_g${GRAPH_SIZE}_${SLURM_JOB_ID}"
 
-RUN_OUTPUT_DIR="${OUTPUT_DIR}/${RUN_NAME}"
-RUN_LOG_DIR="${LOG_DIR}/${RUN_NAME}"
 
-mkdir -p "${RUN_OUTPUT_DIR}"
-mkdir -p "${RUN_LOG_DIR}"
 mkdir -p "${SLURM_LOG_DIR}"
 
 
@@ -166,8 +160,6 @@ srun apptainer exec \
     --bind "${CODE_DIR}:/workspace/Code" \
     --bind "${DATASET_DIR}:/workspace/datasets" \
     --bind "${CHECKPOINT_DIR}:/workspace/checkpoints" \
-    --bind "${LOG_DIR}:/workspace/logs" \
-    --bind "${OUTPUT_DIR}:/workspace/outputs" \
     --pwd /workspace/Code \
     "${IMAGE}" \
     python -u evaluate.py \
