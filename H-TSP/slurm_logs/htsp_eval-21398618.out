@@ -1,0 +1,46 @@
+============================================================
+H-TSP-Evaluation
+============================================================
+Job-ID:                  21398618
+Jobname:                 htsp_eval
+Compute-Node:            gpu21005.pleiades.uni-wuppertal.de
+Start:               2026-08-04T12:19:47+02:00
+
+Project directory:      /beegfs/zoghian/lsr/lsr_evaluation/H-TSP
+Code directory:         /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/Code
+Container:               /beegfs/zoghian/containers/htsp_apptainer.sif
+
+Graph size:              1000
+Dataset:               /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/datasets/HTSP/htsp_datasets/tsp1000_test_concorde.txt
+Lower-Level-Checkpoint:  /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/checkpoints/HTSP/h-tsp-ckpt/lower-level/lower200/best.ckpt
+Upper-Level-Checkpoint:  /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/checkpoints/HTSP/h-tsp-ckpt/upper-level/tsp1000/best.ckpt
+
+Ergebnisverzeichnis:     /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/outputs/htsp_g1000_21398618
+Programmlog directory: /beegfs/zoghian/lsr/lsr_evaluation/H-TSP/logs/htsp_g1000_21398618
+CUDA_VISIBLE_DEVICES:    0
+============================================================
+Tue Aug  4 12:19:47 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 610.43.02              KMD Version: 610.43.02     CUDA UMD Version: 13.3     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-SXM4-40GB          On  |   00000000:13:00.0 Off |                    0 |
+| N/A   25C    P0             52W /  400W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+PyTorch version: 1.10.0
+PyTorch CUDA version: 11.3
+CUDA available: True
+Visible GPUs: 1
+Used GPU: NVIDIA A100-SXM4-40GB
