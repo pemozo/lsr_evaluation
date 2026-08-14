@@ -4,6 +4,9 @@
 # Large local artifacts
 checkpoints/
 datasets/
+ATSP_data/
+RRNCO_data/
+data/
 data/
 **/checkpoints/
 **/datasets/
@@ -12,6 +15,8 @@ data/
 *.pt
 *.pth
 *.pkl
+__pycache__/
+**/__pycache__/
 
 # Local HPC/Slurm files
 H-TSP/run_htsp.slurm
