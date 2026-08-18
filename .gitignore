@@ -22,7 +22,14 @@ __pycache__/
 Third_party/H-TSP/run_htsp.slurm
 slurm_logs/
 **/slurm_logs/
-* .slurm
+*.slurm
 
 # Docker files
-Third_party/UDC-Large-scale-CO-master/Dockerfile
+Docker/
+**/Docker/
+docker/
+**/docker/
+Dockerfile
+**/Dockerfile
+.dockerignore
+**/.dockerignore
