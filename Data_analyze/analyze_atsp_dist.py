@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
 
-DATA_DIR = (ROOT / "data" / "ATSP_data"/ "Matnet_atsp250_64instances")
+dir_matnet = (ROOT / "data" / "ATSP_data"/ "Matnet_atsp250_128instances")
+dir_udc = (ROOT / "data" / "ATSP_data"/ "UDC_atsp250_128instances")
+
+DATA_DIR = dir_matnet
 
 if DATA_DIR.exists():
     print(f"Directory {DATA_DIR} exists.")
@@ -14,6 +17,8 @@ else:
     exit(1)
 
 pt_files = sorted(DATA_DIR.glob("*.pt"))
+
+print(torch.load(pt_files[0], map_location="cpu"))
 
 all_values = []
 

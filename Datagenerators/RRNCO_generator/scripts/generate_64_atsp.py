@@ -1,10 +1,19 @@
 import json
 import os
+from pathlib import Path
 import numpy as np
 
 
-DATA_DIR = "data/dataset"
-OUTPUT_DIR = "data/atsp_n250_64"
+ROOT = Path(__file__).resolve().parents[3]
+GENERATOR_DIR = Path(__file__).resolve().parents[1]
+
+DATA_DIR = GENERATOR_DIR / "data" / "dataset"
+OUTPUT_DIR = (
+    ROOT
+    / "data"
+    / "ATSP_data"
+    / "UDC_atsp250_64instances"
+)
 
 NUM_INSTANCES = 64
 NUM_NODES = 250
@@ -14,7 +23,7 @@ SPLIT = "train"
 
 rng = np.random.default_rng(SEED)
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 split_file = os.path.join(
     DATA_DIR,

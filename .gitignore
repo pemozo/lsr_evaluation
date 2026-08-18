@@ -19,6 +19,10 @@ __pycache__/
 **/__pycache__/
 
 # Local HPC/Slurm files
-H-TSP/run_htsp.slurm
+Third_party/H-TSP/run_htsp.slurm
 slurm_logs/
 **/slurm_logs/
+* .slurm
+
+# Docker files
+Third_party/UDC-Large-scale-CO-master/Dockerfile

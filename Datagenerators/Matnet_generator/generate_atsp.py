@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import torch
 
 from ATSProblemDef import get_random_problems
@@ -10,21 +10,19 @@ problem_gen_params = {
     "scaler": 1000000,
 }
 
-num_instances = 64
+num_instances = 128
 node_cnt = 250
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
+ROOT = Path(__file__).resolve().parents[2]
 
-project_dir = os.path.dirname(script_dir)
-
-output_dir = os.path.join(
-    project_dir,
-    "data",
-    "ATSP_data",
-    "Matnet_atsp250_64instances",
+output_dir = (
+    ROOT
+    / "data"
+    / "ATSP_data"
+    / "Matnet_atsp250_128instances"
 )
 
-os.makedirs(output_dir, exist_ok=True)
+output_dir.mkdir(parents=True, exist_ok=True)
 
 for i in range(num_instances):
 
@@ -36,10 +34,7 @@ for i in range(num_instances):
 
     instance = problem[0]
 
-    output_path = os.path.join(
-        output_dir,
-        f"instance_{i:04d}.pt"
-    )
+    output_path = output_dir / f"instance_{i:04d}.pt"
 
     torch.save(instance, output_path)
 
