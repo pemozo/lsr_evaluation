@@ -28,6 +28,33 @@ def _load_torch_file(path, map_location=None):
     return torch.load(resolved_path, map_location=map_location)
 
 
+def _load_test_data(path, episodes):
+    resolved_path = _resolve_path(path)
+    if os.path.isdir(resolved_path):
+        instance_files = sorted(
+            os.path.join(resolved_path, filename)
+            for filename in os.listdir(resolved_path)
+            if filename.endswith('.pt')
+        )
+        if len(instance_files) < episodes:
+            raise ValueError(
+                'Not enough .pt files in {}: found {}, need {}'.format(
+                    resolved_path, len(instance_files), episodes
+                )
+            )
+        instances = [_load_torch_file(filename) for filename in instance_files[:episodes]]
+        return torch.stack(instances, dim=0)
+
+    data = _load_torch_file(resolved_path)
+    if data.size(0) < episodes:
+        raise ValueError(
+            'Not enough instances in {}: found {}, need {}'.format(
+                resolved_path, data.size(0), episodes
+            )
+        )
+    return data[:episodes]
+
+
 class ATSPTesterrrc:
     def __init__(self,
                  env_params,
@@ -105,15 +132,15 @@ class ATSPTesterrrc:
         data_load = self.trainer_params.get('data_load', {})
         data_file = data_load.get('data_file')
         if data_file:
-            data = _load_torch_file(data_file)[:self.trainer_params['validation_test_episodes']]
+            data = _load_test_data(data_file, self.trainer_params['validation_test_episodes'])
             self.logger.info('=================================================================')
             self.validation(data.size(1), data)
             return
 
         data_250_file = data_load.get('data_250_file', 'ATSP_data250_n16.pt')
         data_500_file = data_load.get('data_500_file', 'ATSP_data500_n128.pt')
-        data_250 = _load_torch_file(data_250_file)[:self.trainer_params['validation_test_episodes']]
-        data_500 = _load_torch_file(data_500_file)[:self.trainer_params['validation_test_episodes']]
+        data_250 = _load_test_data(data_250_file, self.trainer_params['validation_test_episodes'])
+        data_500 = _load_test_data(data_500_file, self.trainer_params['validation_test_episodes'])
         # data_1000 = torch.load('ATSP_data1000_n16.pt')[:self.trainer_params['validation_test_episodes']]
         self.logger.info('=================================================================')
         self.validation(250, data_250)
