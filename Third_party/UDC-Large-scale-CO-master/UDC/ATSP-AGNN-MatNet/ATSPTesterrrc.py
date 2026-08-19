@@ -181,7 +181,7 @@ class ATSPTesterrrc:
         solution = torch.stack(solution_list, dim=0)
         test_num_episode = self.trainer_params['validation_test_episodes']
         k = 0
-        while k < 250:
+        while k < 2:
             k += 1
             episode = 0
             score_AM = AverageMeter()
