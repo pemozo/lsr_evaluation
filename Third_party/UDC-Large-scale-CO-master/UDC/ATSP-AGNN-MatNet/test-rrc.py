@@ -11,6 +11,7 @@ CUDA_DEVICE_NUM = 0
 
 import os
 import sys
+import argparse
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, "..")  # for problem_def
@@ -108,9 +109,15 @@ trainer_params = {
         't_enable': True,  # enable loading pre-trained conquering model
         't_path': './',  # directory path of pre-trained conquering model.
         't_epoch': 300,  # epoch version of pre-trained conquering model to laod.
+        't_file': '../Checkpoints/checkpoint-tsp-300.pt',  # full path to conquering checkpoint. Overrides t_path/t_epoch when set.
         'p_enable': True,  # enable loading pre-trained dividing model
         'p_path': './',  # directory path of pre-trained dividing model.
         'p_epoch': 300,  # epoch version of pre-trained dividing model to laod.
+        'p_file': '../Checkpoints/checkpoint-partition-300.pt',  # full path to dividing checkpoint. Overrides p_path/p_epoch when set.
+    },
+    'data_load': {
+        'data_250_file': '../../../../data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt',
+        'data_500_file': '../Checkpoints/ATSP_data500_n128.pt',
     },
     'validation_test_episodes': 128, # size of the test set
     'validation_test_batch_size': 2, # batch size of testing
@@ -131,6 +138,8 @@ def main():
     if DEBUG_MODE:
         _set_debug_mode()
 
+    _apply_cli_args()
+
     create_logger(**logger_params)
     _print_config()
 
@@ -150,6 +159,24 @@ def _set_debug_mode():
     trainer_params['epochs'] = 2
     trainer_params['train_episodes'] = 10
     trainer_params['train_batch_size'] = 4
+
+
+def _apply_cli_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--t-file', help='Full path to conquering checkpoint.')
+    parser.add_argument('--p-file', help='Full path to dividing checkpoint.')
+    parser.add_argument('--data-250-file', help='Full path to 250-node test data.')
+    parser.add_argument('--data-500-file', help='Full path to 500-node test data.')
+    args = parser.parse_args()
+
+    if args.t_file:
+        trainer_params['model_load']['t_file'] = args.t_file
+    if args.p_file:
+        trainer_params['model_load']['p_file'] = args.p_file
+    if args.data_250_file:
+        trainer_params['data_load']['data_250_file'] = args.data_250_file
+    if args.data_500_file:
+        trainer_params['data_load']['data_500_file'] = args.data_500_file
 
 
 def _print_config():

@@ -1,4 +1,5 @@
 import torch
+import os
 from logging import getLogger
 from torch_geometric.data import Data
 from ATSProblemDef import get_random_problems, augment_xy_data_by_8_fold
@@ -14,6 +15,17 @@ from torch.optim import Adam as Optimizer
 from torch.optim.lr_scheduler import MultiStepLR as Scheduler
 
 from utils.utils import *
+
+
+def _resolve_path(path):
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+
+
+def _load_torch_file(path, map_location=None):
+    resolved_path = _resolve_path(path)
+    if not os.path.isfile(resolved_path):
+        raise FileNotFoundError('Required file not found: {}'.format(resolved_path))
+    return torch.load(resolved_path, map_location=map_location)
 
 
 class ATSPTesterrrc:
@@ -66,8 +78,8 @@ class ATSPTesterrrc:
         self.start_epoch = 1
         model_load = trainer_params['model_load']
         if model_load['t_enable']:
-            checkpoint_fullname = '{t_path}/checkpoint-tsp-{t_epoch}.pt'.format(**model_load)
-            checkpoint = torch.load(checkpoint_fullname, map_location=device)
+            checkpoint_fullname = model_load.get('t_file') or '{t_path}/checkpoint-tsp-{t_epoch}.pt'.format(**model_load)
+            checkpoint = _load_torch_file(checkpoint_fullname, map_location=device)
             self.model_t.load_state_dict(checkpoint['model_state_dict'])
             self.start_epoch = 1 + model_load['t_epoch']
             self.result_log.set_raw_data(checkpoint['result_log'])
@@ -76,8 +88,8 @@ class ATSPTesterrrc:
             self.logger.info('Saved TSP Model Loaded !!')
 
         if model_load['p_enable']:
-            checkpoint_fullname = '{p_path}/checkpoint-partition-{p_epoch}.pt'.format(**model_load)
-            checkpoint = torch.load(checkpoint_fullname, map_location=device)
+            checkpoint_fullname = model_load.get('p_file') or '{p_path}/checkpoint-partition-{p_epoch}.pt'.format(**model_load)
+            checkpoint = _load_torch_file(checkpoint_fullname, map_location=device)
             self.model_p.load_state_dict(checkpoint['model_state_dict'])
             self.start_epoch = 1 + model_load['p_epoch']
             self.result_log.set_raw_data(checkpoint['result_log'])
@@ -90,8 +102,11 @@ class ATSPTesterrrc:
 
     def run(self):
         self.time_estimator.reset(self.start_epoch)
-        data_250 = torch.load('ATSP_data250_n16.pt')[:self.trainer_params['validation_test_episodes']]
-        data_500 = torch.load('ATSP_data500_n128.pt')[:self.trainer_params['validation_test_episodes']]
+        data_load = self.trainer_params.get('data_load', {})
+        data_250_file = data_load.get('data_250_file', 'ATSP_data250_n16.pt')
+        data_500_file = data_load.get('data_500_file', 'ATSP_data500_n128.pt')
+        data_250 = _load_torch_file(data_250_file)[:self.trainer_params['validation_test_episodes']]
+        data_500 = _load_torch_file(data_500_file)[:self.trainer_params['validation_test_episodes']]
         # data_1000 = torch.load('ATSP_data1000_n16.pt')[:self.trainer_params['validation_test_episodes']]
         self.logger.info('=================================================================')
         self.validation(250, data_250)
