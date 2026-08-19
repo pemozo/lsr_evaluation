@@ -91,6 +91,7 @@ class ATSPTesterrrc:
         else:
             device = torch.device('cpu')
             torch.set_default_tensor_type('torch.FloatTensor')
+        self.device = device
 
         # Main Components
         self.model_p = PartitionModel(self.model_p_params['embedding_dim'], 2, 50, 2, depth=self.model_p_params['depth']).cuda()
@@ -133,6 +134,7 @@ class ATSPTesterrrc:
         data_file = data_load.get('data_file')
         if data_file:
             data = _load_test_data(data_file, self.trainer_params['validation_test_episodes'])
+            data = data.to(self.device)
             self.logger.info('=================================================================')
             self.validation(data.size(1), data)
             return
@@ -141,6 +143,8 @@ class ATSPTesterrrc:
         data_500_file = data_load.get('data_500_file', 'ATSP_data500_n128.pt')
         data_250 = _load_test_data(data_250_file, self.trainer_params['validation_test_episodes'])
         data_500 = _load_test_data(data_500_file, self.trainer_params['validation_test_episodes'])
+        data_250 = data_250.to(self.device)
+        data_500 = data_500.to(self.device)
         # data_1000 = torch.load('ATSP_data1000_n16.pt')[:self.trainer_params['validation_test_episodes']]
         self.logger.info('=================================================================')
         self.validation(250, data_250)
