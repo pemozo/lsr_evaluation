@@ -5,6 +5,7 @@ This repository contains experiment files for working with following repositorie
 - H-TSP
 - MatNet
 - RRNCO
+- UDC-Large-scale-CO
 
 ## H-TSP Attribution
 
@@ -26,3 +27,10 @@ The RRNCO code in this repository is based on the official implementation of
 RRNCO:
 
 - Original repository: [ai4co/real-routing-nco](https://github.com/ai4co/real-routing-nco)
+
+## UDC-Large-scale-CO Attribution
+
+The UDC-Large-scale-CO code in this repository is based on the implementation
+referenced here:
+
+- Repository path: [pemozo/lsr_evaluation/Third_party/UDC-Large-scale-CO-master](https://github.com/pemozo/lsr_evaluation/tree/main/Third_party/UDC-Large-scale-CO-master)
