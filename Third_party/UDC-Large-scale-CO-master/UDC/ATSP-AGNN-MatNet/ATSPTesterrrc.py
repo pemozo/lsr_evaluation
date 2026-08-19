@@ -103,6 +103,13 @@ class ATSPTesterrrc:
     def run(self):
         self.time_estimator.reset(self.start_epoch)
         data_load = self.trainer_params.get('data_load', {})
+        data_file = data_load.get('data_file')
+        if data_file:
+            data = _load_torch_file(data_file)[:self.trainer_params['validation_test_episodes']]
+            self.logger.info('=================================================================')
+            self.validation(data.size(1), data)
+            return
+
         data_250_file = data_load.get('data_250_file', 'ATSP_data250_n16.pt')
         data_500_file = data_load.get('data_500_file', 'ATSP_data500_n128.pt')
         data_250 = _load_torch_file(data_250_file)[:self.trainer_params['validation_test_episodes']]

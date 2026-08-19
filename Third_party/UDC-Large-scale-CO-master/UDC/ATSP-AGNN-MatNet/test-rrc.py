@@ -116,8 +116,8 @@ trainer_params = {
         'p_file': '../Checkpoints/checkpoint-partition-300.pt',  # full path to dividing checkpoint. Overrides p_path/p_epoch when set.
     },
     'data_load': {
-        'data_250_file': '../../../../data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt',
-        'data_500_file': '../Checkpoints/ATSP_data500_n128.pt',
+        'data_file': '../../../../data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt',
+        #'data_500_file': '../Checkpoints/ATSP_data500_n128.pt',
     },
     'validation_test_episodes': 128, # size of the test set
     'validation_test_batch_size': 2, # batch size of testing
@@ -165,18 +165,15 @@ def _apply_cli_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--t-file', help='Full path to conquering checkpoint.')
     parser.add_argument('--p-file', help='Full path to dividing checkpoint.')
-    parser.add_argument('--data-250-file', help='Full path to 250-node test data.')
-    parser.add_argument('--data-500-file', help='Full path to 500-node test data.')
+    parser.add_argument('--data-file', help='Full path test data.')
     args = parser.parse_args()
 
     if args.t_file:
         trainer_params['model_load']['t_file'] = args.t_file
     if args.p_file:
         trainer_params['model_load']['p_file'] = args.p_file
-    if args.data_250_file:
-        trainer_params['data_load']['data_250_file'] = args.data_250_file
-    if args.data_500_file:
-        trainer_params['data_load']['data_500_file'] = args.data_500_file
+    if args.data_file:
+        trainer_params['data_load']['data_file'] = args.data_file
 
 
 def _print_config():
