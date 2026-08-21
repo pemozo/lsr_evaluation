@@ -1,0 +1,2 @@
+dataset,data_path,requested_instances,successful_instances,failed_instances,scale,runs,max_trials,mean_tour_cost,population_std_tour_cost,min_tour_cost,max_tour_cost,mean_runtime_seconds,total_runtime_seconds
+ctrl,/workspace/project/data/ATSP_data/Ctrl_ATSP_data,64,64,0,1000000,1,500,1.7881855934625985,0.09598223788550984,1.571414998446926,2.0028489959295257,1.3249655514848655,84.79779529503139

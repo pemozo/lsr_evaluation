@@ -1,0 +1,16 @@
+{
+  "dataset": "ctrl",
+  "data_path": "/workspace/project/data/ATSP_data/Ctrl_ATSP_data",
+  "requested_instances": 64,
+  "successful_instances": 64,
+  "failed_instances": 0,
+  "scale": 1000000,
+  "runs": 1,
+  "max_trials": 500,
+  "mean_tour_cost": 1.7881855934625985,
+  "population_std_tour_cost": 0.09598223788550984,
+  "min_tour_cost": 1.571414998446926,
+  "max_tour_cost": 2.0028489959295257,
+  "mean_runtime_seconds": 1.3249655514848655,
+  "total_runtime_seconds": 84.79779529503139
+}

@@ -1,0 +1,81 @@
+[2026-08-21 16:59:39] test-rrc.py(186) : DEBUG_MODE: False
+[2026-08-21 16:59:39] test-rrc.py(187) : USE_CUDA: True, CUDA_DEVICE_NUM: 0
+[2026-08-21 16:59:39] test-rrc.py(188) : env_params{'problem_size_low': 250, 'problem_size_high': 500, 'sub_size': 50, 'pomo_size': 50, 'sample_size': 30, 'problem_gen_params': {'int_min': 0, 'int_max': 1000000, 'scaler': 1000000}, 'optimal': {100: 7.7632, 200: 10.7036, 500: 16.5215, 1000: 23.1199}}
+[2026-08-21 16:59:39] test-rrc.py(188) : model_p_params{'embedding_dim': 64, 'depth': 12}
+[2026-08-21 16:59:39] test-rrc.py(188) : model_params{'embedding_dim': 256, 'sqrt_embedding_dim': 16.0, 'encoder_layer_num': 5, 'qkv_dim': 16, 'sqrt_qkv_dim': 4.0, 'head_num': 16, 'logit_clipping': 50, 'ff_hidden_dim': 512, 'ms_hidden_dim': 16, 'ms_layer1_init': 0.7071067811865476, 'ms_layer2_init': 0.25, 'eval_type': 'argmax', 'one_hot_seed_cnt': 50}
+[2026-08-21 16:59:39] test-rrc.py(188) : optimizer_params{'optimizer': {'lr': 0.0001, 'weight_decay': 0}, 'optimizer_p': {'lr': 0.0001, 'weight_decay': 0}, 'scheduler': {'milestones': [3001], 'gamma': 0.1}}
+[2026-08-21 16:59:39] test-rrc.py(188) : trainer_params{'use_cuda': True, 'cuda_device_num': 0, 'data_load_1000': 're_generate_test_TSP1000_0423_n128.txt', 'data_load_500': 're_generate_test_TSP500_0423_n128.txt', 'epochs': 3100, 'train_episodes': 1000, 'train_batch_size': 1, 'logging': {'model_save_interval': 10, 'img_save_interval': 10, 'log_image_params_1': {'json_foldername': 'log_image_style', 'filename': 'style_tsp_100.json'}, 'log_image_params_2': {'json_foldername': 'log_image_style', 'filename': 'style_loss_1.json'}}, 'model_load': {'t_enable': True, 't_path': './', 't_epoch': 300, 't_file': '/workspace/project/Third_party/UDC-Large-scale-CO-master/UDC/Checkpoints/checkpoint-tsp-300.pt', 'p_enable': True, 'p_path': './', 'p_epoch': 300, 'p_file': '/workspace/project/Third_party/UDC-Large-scale-CO-master/UDC/Checkpoints/checkpoint-partition-300.pt'}, 'data_load': {'data_file': '/workspace/project/data/ATSP_data/RRNCO_atsp250_64instances/atsp_n250_64_data'}, 'validation_test_episodes': 64, 'validation_test_batch_size': 1, 'validation_aug_factor': 20}
+[2026-08-21 16:59:39] test-rrc.py(188) : logger_params{'log_file': {'desc': 'train__tsp_n500__3000epoch', 'filename': 'log.txt', 'filepath': './result/20260821_235937_train__tsp_n500__3000epoch'}}
+[2026-08-21 16:59:44] ATSPTesterrrc.py(129) : Saved TSP Model Loaded !!
+[2026-08-21 16:59:44] ATSPTesterrrc.py(139) : Saved Partition Model Loaded !!
+[2026-08-21 16:59:44] ATSPTesterrrc.py(151) : =================================================================
+[2026-08-21 16:59:58] ATSPTesterrrc.py(230) : iter  1, episode  64/ 64, Elapsed[0.22m], Remain[0.00m], score:94.012, aug_score:82.708
+[2026-08-21 17:00:03] ATSPTesterrrc.py(230) : iter  2, episode  64/ 64, Elapsed[0.32m], Remain[0.00m], score:91.203, aug_score:80.503
+[2026-08-21 17:00:03] ATSPTesterrrc.py(236) :  *** Validation Scale 250 Done *** 
+[2026-08-21 17:00:03] ATSPTesterrrc.py(237) :  NO-AUG SCORE: 91.2029 
+[2026-08-21 17:00:03] ATSPTesterrrc.py(238) :  AUGMENTATION SCORE: 80.5033 
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   0: no_aug_cost=67.865097, aug_cost=65.554291, runtime=4.3976s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   1: no_aug_cost=75.075897, aug_cost=70.493805, runtime=0.2471s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   2: no_aug_cost=99.882599, aug_cost=94.843300, runtime=0.2362s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   3: no_aug_cost=85.082397, aug_cost=74.650902, runtime=0.2317s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   4: no_aug_cost=71.645302, aug_cost=65.531799, runtime=0.2313s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   5: no_aug_cost=74.205803, aug_cost=68.536697, runtime=0.2314s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   6: no_aug_cost=110.319199, aug_cost=35.965801, runtime=0.2313s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   7: no_aug_cost=82.929802, aug_cost=78.442307, runtime=0.2315s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   8: no_aug_cost=84.248795, aug_cost=80.839905, runtime=0.2314s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE   9: no_aug_cost=73.269302, aug_cost=73.269302, runtime=0.2316s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  10: no_aug_cost=113.263000, aug_cost=106.803802, runtime=0.2313s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  11: no_aug_cost=80.850800, aug_cost=77.944702, runtime=0.2318s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  12: no_aug_cost=74.921303, aug_cost=71.880997, runtime=0.2317s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  13: no_aug_cost=68.420700, aug_cost=63.723400, runtime=0.2320s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  14: no_aug_cost=76.033600, aug_cost=72.594406, runtime=0.2319s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  15: no_aug_cost=78.375900, aug_cost=68.199493, runtime=0.2320s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  16: no_aug_cost=88.206398, aug_cost=88.206398, runtime=0.2320s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  17: no_aug_cost=87.952103, aug_cost=79.360596, runtime=0.2319s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  18: no_aug_cost=50.520699, aug_cost=45.718403, runtime=0.2323s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  19: no_aug_cost=90.031204, aug_cost=84.352798, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  20: no_aug_cost=81.984497, aug_cost=68.918205, runtime=0.2325s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  21: no_aug_cost=100.019897, aug_cost=93.154404, runtime=0.2325s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  22: no_aug_cost=116.745995, aug_cost=116.368904, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  23: no_aug_cost=64.751892, aug_cost=60.235703, runtime=0.2324s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  24: no_aug_cost=108.516296, aug_cost=102.987701, runtime=0.2324s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  25: no_aug_cost=99.644104, aug_cost=99.644104, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  26: no_aug_cost=93.176407, aug_cost=85.878204, runtime=0.2325s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  27: no_aug_cost=87.063202, aug_cost=85.901199, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  28: no_aug_cost=236.343491, aug_cost=115.012794, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  29: no_aug_cost=77.386101, aug_cost=77.136993, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  30: no_aug_cost=103.727707, aug_cost=89.767204, runtime=0.2320s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  31: no_aug_cost=62.082500, aug_cost=52.908497, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  32: no_aug_cost=89.462700, aug_cost=89.462700, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  33: no_aug_cost=79.290405, aug_cost=73.125702, runtime=0.2325s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  34: no_aug_cost=94.938797, aug_cost=85.729004, runtime=0.2325s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  35: no_aug_cost=90.241699, aug_cost=87.965897, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  36: no_aug_cost=87.471207, aug_cost=83.762901, runtime=0.2324s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  37: no_aug_cost=99.952499, aug_cost=89.581398, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  38: no_aug_cost=74.936905, aug_cost=69.168594, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  39: no_aug_cost=93.756302, aug_cost=89.668297, runtime=0.2328s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  40: no_aug_cost=141.104401, aug_cost=68.911499, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  41: no_aug_cost=98.203201, aug_cost=83.193405, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  42: no_aug_cost=83.782204, aug_cost=75.879501, runtime=0.2328s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  43: no_aug_cost=75.248299, aug_cost=68.037796, runtime=0.2323s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  44: no_aug_cost=91.151505, aug_cost=83.564804, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  45: no_aug_cost=157.184998, aug_cost=83.829300, runtime=0.2326s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  46: no_aug_cost=109.709305, aug_cost=102.798500, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  47: no_aug_cost=127.217506, aug_cost=94.896103, runtime=0.2328s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  48: no_aug_cost=101.762398, aug_cost=92.372696, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  49: no_aug_cost=76.659302, aug_cost=73.899300, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  50: no_aug_cost=105.006195, aug_cost=105.006195, runtime=0.2332s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  51: no_aug_cost=73.997498, aug_cost=68.999695, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  52: no_aug_cost=85.697701, aug_cost=80.012901, runtime=0.2328s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  53: no_aug_cost=75.980400, aug_cost=67.282700, runtime=0.2329s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  54: no_aug_cost=83.949097, aug_cost=80.555801, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  55: no_aug_cost=80.473404, aug_cost=72.957596, runtime=0.2330s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  56: no_aug_cost=95.360306, aug_cost=90.263199, runtime=0.2328s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  57: no_aug_cost=88.916702, aug_cost=83.363602, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  58: no_aug_cost=88.308502, aug_cost=87.185402, runtime=0.2331s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  59: no_aug_cost=72.839699, aug_cost=72.839699, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  60: no_aug_cost=98.132004, aug_cost=95.906799, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  61: no_aug_cost=84.742104, aug_cost=81.489799, runtime=0.2327s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  62: no_aug_cost=92.380203, aug_cost=90.512100, runtime=0.2331s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(304) : INSTANCE  63: no_aug_cost=74.587898, aug_cost=65.164200, runtime=0.2329s
+[2026-08-21 17:00:03] ATSPTesterrrc.py(328) : RUNTIME: mean=0.2978s/instance, total_instance=19.0599s, total_wall=19.0638s

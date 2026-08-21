@@ -1,0 +1,2 @@
+dataset,data_path,requested_instances,successful_instances,failed_instances,scale,runs,max_trials,mean_tour_cost,population_std_tour_cost,min_tour_cost,max_tour_cost,mean_runtime_seconds,total_runtime_seconds
+rrnco,/workspace/project/data/ATSP_data/RRNCO_atsp250_64instances/atsp_n250_64_data,64,63,1,1000000,1,500,57.776736498697865,11.470185880922168,24.148699969868176,88.1142002287088,0.9836156153000452,61.97527958090359

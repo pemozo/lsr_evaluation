@@ -1,0 +1,2 @@
+instances,udc_iterations,augmentation_factor,mean_no_aug_tour_cost,mean_augmented_tour_cost,mean_runtime_seconds,total_instance_runtime_seconds,total_wall_runtime_seconds
+64,2,20,2.2709318716078997,2.1636136136949062,0.3098779548422499,19.832189109903993,19.83629789002589

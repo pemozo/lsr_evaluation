@@ -1,0 +1,16 @@
+{
+  "dataset": "udc",
+  "data_path": "/workspace/project/data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt",
+  "requested_instances": 64,
+  "successful_instances": 64,
+  "failed_instances": 0,
+  "scale": 1000000,
+  "runs": 1,
+  "max_trials": 500,
+  "mean_tour_cost": 1.5716247306590265,
+  "population_std_tour_cost": 0.07817143118931257,
+  "min_tour_cost": 1.4003520032729284,
+  "max_tour_cost": 1.7794989924841502,
+  "mean_runtime_seconds": 0.616575485234307,
+  "total_runtime_seconds": 39.46083105499565
+}

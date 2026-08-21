@@ -1,0 +1,2 @@
+dataset,data_path,requested_instances,successful_instances,failed_instances,scale,runs,max_trials,mean_tour_cost,population_std_tour_cost,min_tour_cost,max_tour_cost,mean_runtime_seconds,total_runtime_seconds
+udc,/workspace/project/data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt,64,64,0,1000000,1,500,1.5716247306590265,0.07817143118931257,1.4003520032729284,1.7794989924841502,0.616575485234307,39.46083105499565

@@ -1,0 +1,16 @@
+{
+  "dataset": "rrnco",
+  "data_path": "/workspace/project/data/ATSP_data/RRNCO_atsp250_64instances/atsp_n250_64_data",
+  "requested_instances": 64,
+  "successful_instances": 63,
+  "failed_instances": 1,
+  "scale": 1000000,
+  "runs": 1,
+  "max_trials": 500,
+  "mean_tour_cost": 57.776736498697865,
+  "population_std_tour_cost": 11.470185880922168,
+  "min_tour_cost": 24.148699969868176,
+  "max_tour_cost": 88.1142002287088,
+  "mean_runtime_seconds": 0.9836156153000452,
+  "total_runtime_seconds": 61.97527958090359
+}

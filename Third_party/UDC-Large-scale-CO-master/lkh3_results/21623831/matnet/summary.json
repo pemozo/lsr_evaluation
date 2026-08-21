@@ -1,0 +1,16 @@
+{
+  "dataset": "matnet",
+  "data_path": "/workspace/project/data/ATSP_data/Matnet_atsp250_128instances",
+  "requested_instances": 64,
+  "successful_instances": 64,
+  "failed_instances": 0,
+  "scale": 1000000,
+  "runs": 1,
+  "max_trials": 500,
+  "mean_tour_cost": 1.5673520935829828,
+  "population_std_tour_cost": 0.07675060308766427,
+  "min_tour_cost": 1.3817780023864543,
+  "max_tour_cost": 1.7724390058283461,
+  "mean_runtime_seconds": 0.6553048326090902,
+  "total_runtime_seconds": 41.939509286981774
+}
