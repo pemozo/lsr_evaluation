@@ -33,4 +33,4 @@ RRNCO:
 The UDC-Large-scale-CO code in this repository is based on the implementation
 referenced here:
 
-- Repository path: [pemozo/lsr_evaluation/Third_party/UDC-Large-scale-CO-master](https://github.com/pemozo/lsr_evaluation/tree/main/Third_party/UDC-Large-scale-CO-master)
+- Repository path: [CIAM Group/UDC-Large-scale-CO-master](https://github.com/CIAM-Group/NCO_code/tree/main/single_objective/UDC-Large-scale-CO-master)
