@@ -119,8 +119,8 @@ trainer_params = {
         'data_file': '../../../../data/ATSP_data/UDC_atsp250_128instances/ATSP_data250_n128.pt',
         #'data_500_file': '../Checkpoints/ATSP_data500_n128.pt',
     },
-    'validation_test_episodes': 128, # size of the test set
-    'validation_test_batch_size': 2, # batch size of testing
+    'validation_test_episodes': 64, # use the first 64 instances for comparable evaluation
+    'validation_test_batch_size': 1, # batch size 1 enables per-instance runtime measurement
     'validation_aug_factor': 20, # \alpha in paper
 }
 
@@ -175,7 +175,9 @@ def _apply_cli_args():
         trainer_params['model_load']['p_file'] = args.p_file
     if args.data_file:
         trainer_params['data_load']['data_file'] = args.data_file
-    if args.episodes:
+    if args.episodes is not None:
+        if not 1 <= args.episodes <= 64:
+            parser.error('--episodes must be between 1 and 64 for the common evaluation set')
         trainer_params['validation_test_episodes'] = args.episodes
 
 

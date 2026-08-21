@@ -1,5 +1,7 @@
 import torch
+import csv
 import os
+import time
 from logging import getLogger
 from torch_geometric.data import Data
 from ATSProblemDef import get_random_problems, augment_xy_data_by_8_fold
@@ -192,9 +194,13 @@ class ATSPTesterrrc:
         self.model_t.eval()
         # self.model_p.eval()
         self.model_t.model_params['eval_type'] = 'argmax'
-        solution_list = self._load_init_sol(data)
+        self._synchronize_device()
+        validation_started = time.perf_counter()
+        solution_list, instance_runtimes = self._load_init_sol(data)
         solution = torch.stack(solution_list, dim=0)
         test_num_episode = self.trainer_params['validation_test_episodes']
+        final_no_aug_scores = [float('nan')] * test_num_episode
+        final_aug_scores = [float('nan')] * test_num_episode
         k = 0
         while k < 2:
             k += 1
@@ -204,7 +210,19 @@ class ATSPTesterrrc:
             while episode < test_num_episode:
                 remaining = test_num_episode - episode
                 batch_size = min(self.trainer_params['validation_test_batch_size'], remaining)
-                solution, score, aug_score = self._test_one_batch(solution, data, batch_size, episode, k)
+                self._synchronize_device()
+                batch_started = time.perf_counter()
+                solution, score, aug_score, no_aug_scores, aug_scores = self._test_one_batch(
+                    solution, data, batch_size, episode, k
+                )
+                self._synchronize_device()
+                batch_runtime = time.perf_counter() - batch_started
+                runtime_per_instance = batch_runtime / batch_size
+                for offset in range(batch_size):
+                    instance_index = episode + offset
+                    instance_runtimes[instance_index] += runtime_per_instance
+                    final_no_aug_scores[instance_index] = no_aug_scores[offset]
+                    final_aug_scores[instance_index] = aug_scores[offset]
                 score_AM.update(score, batch_size)
                 aug_score_AM.update(aug_score, batch_size)
                 episode += batch_size
@@ -213,18 +231,30 @@ class ATSPTesterrrc:
                                                                                                                                episode, test_num_episode, elapsed_time_str,
                                                                                                                                remain_time_str, score_AM.avg, aug_score_AM.avg))
 
+        self._synchronize_device()
+        total_wall_runtime = time.perf_counter() - validation_started
         self.logger.info(" *** Validation Scale " + str(scale) + " Done *** ")
         self.logger.info(" NO-AUG SCORE: {:.4f} ".format(score_AM.avg))
         self.logger.info(" AUGMENTATION SCORE: {:.4f} ".format(aug_score_AM.avg))
+        self._save_instance_results(
+            scale,
+            final_no_aug_scores,
+            final_aug_scores,
+            instance_runtimes,
+            total_wall_runtime,
+        )
 
-        cost_file = open(self.result_folder + '/curve' + str(scale) + '.txt', mode='a+')
-        cost_file.write(str(score_AM.avg) + ' ' + str(aug_score_AM.avg) + '\n')
+        with open(self.result_folder + '/curve' + str(scale) + '.txt', mode='a+') as cost_file:
+            cost_file.write(str(score_AM.avg) + ' ' + str(aug_score_AM.avg) + '\n')
         self.model_t.model_params['eval_type'] = 'softmax'
         self.env.pomo_size = a
 
     def _load_init_sol(self, data):
         solution_list = []
+        instance_runtimes = []
         for i in range(self.trainer_params['validation_test_episodes']):
+            self._synchronize_device()
+            instance_started = time.perf_counter()
             self.env.load_raw_problems(1, i, data)
             pyg_data = self.gen_pyg_data(self.env.raw_problems)
             index = torch.randint(0, self.env.raw_problems.size(1), [self.trainer_params['validation_aug_factor']])
@@ -244,8 +274,64 @@ class ATSPTesterrrc:
                 selected = item[:, None]
                 visited = visited.scatter(-1, selected, 1)
                 solution = torch.cat((solution, selected), dim=-1)
+            self._synchronize_device()
+            instance_runtimes.append(time.perf_counter() - instance_started)
             solution_list.append(solution)
-        return solution_list
+        return solution_list, instance_runtimes
+
+    def _synchronize_device(self):
+        if self.device.type == 'cuda':
+            torch.cuda.synchronize(self.device)
+
+    def _save_instance_results(self, scale, no_aug_scores, aug_scores, runtimes, total_wall_runtime):
+        instance_csv = os.path.join(self.result_folder, 'instance_results_scale{}.csv'.format(scale))
+        with open(instance_csv, mode='w', newline='') as csv_file:
+            fieldnames = [
+                'instance_index',
+                'no_aug_tour_cost',
+                'augmented_tour_cost',
+                'runtime_seconds',
+            ]
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for index, (no_aug, aug, runtime) in enumerate(zip(no_aug_scores, aug_scores, runtimes)):
+                writer.writerow({
+                    'instance_index': index,
+                    'no_aug_tour_cost': no_aug,
+                    'augmented_tour_cost': aug,
+                    'runtime_seconds': runtime,
+                })
+                self.logger.info(
+                    'INSTANCE {:3d}: no_aug_cost={:.6f}, aug_cost={:.6f}, runtime={:.4f}s'.format(
+                        index, no_aug, aug, runtime
+                    )
+                )
+
+        instance_count = len(runtimes)
+        total_instance_runtime = sum(runtimes)
+        summary = {
+            'instances': instance_count,
+            'udc_iterations': 2,
+            'augmentation_factor': self.trainer_params['validation_aug_factor'],
+            'mean_no_aug_tour_cost': sum(no_aug_scores) / instance_count,
+            'mean_augmented_tour_cost': sum(aug_scores) / instance_count,
+            'mean_runtime_seconds': total_instance_runtime / instance_count,
+            'total_instance_runtime_seconds': total_instance_runtime,
+            'total_wall_runtime_seconds': total_wall_runtime,
+        }
+        summary_csv = os.path.join(self.result_folder, 'summary_scale{}.csv'.format(scale))
+        with open(summary_csv, mode='w', newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=list(summary.keys()))
+            writer.writeheader()
+            writer.writerow(summary)
+
+        self.logger.info(
+            'RUNTIME: mean={:.4f}s/instance, total_instance={:.4f}s, total_wall={:.4f}s'.format(
+                summary['mean_runtime_seconds'],
+                summary['total_instance_runtime_seconds'],
+                summary['total_wall_runtime_seconds'],
+            )
+        )
 
     def _test_one_batch(self, solution_gnn, data, batch_size, episode, k):
         aug_factor = self.trainer_params['validation_aug_factor']
@@ -290,4 +376,12 @@ class ATSPTesterrrc:
         merge_reward_0 = self.env._get_travel_distance2(now_problem, solution)
         solution_out = solution_gnn.clone()
         solution_out[episode:episode + batch_size] = solution
-        return solution_out, merge_reward_0[:, 0].mean(0).item(), merge_reward_0.min(1)[0].mean(0).item()  # merge_reward_1.min(1)[0].mean(0).item()
+        no_aug_scores = merge_reward_0[:, 0]
+        aug_scores = merge_reward_0.min(1)[0]
+        return (
+            solution_out,
+            no_aug_scores.mean(0).item(),
+            aug_scores.mean(0).item(),
+            no_aug_scores.detach().cpu().tolist(),
+            aug_scores.detach().cpu().tolist(),
+        )
