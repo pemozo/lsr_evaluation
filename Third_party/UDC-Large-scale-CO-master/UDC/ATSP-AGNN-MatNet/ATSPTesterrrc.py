@@ -28,24 +28,35 @@ def _load_torch_file(path, map_location=None):
     return torch.load(resolved_path, map_location=map_location)
 
 
+def _load_instance_file(path):
+    if path.endswith('.npz'):
+        npz_data = np.load(path)
+        if 'distance' not in npz_data:
+            raise KeyError('Required array "distance" not found in {}'.format(path))
+        return torch.tensor(npz_data['distance'], dtype=torch.float32)
+    return _load_torch_file(path)
+
+
 def _load_test_data(path, episodes):
     resolved_path = _resolve_path(path)
     if os.path.isdir(resolved_path):
         instance_files = sorted(
             os.path.join(resolved_path, filename)
             for filename in os.listdir(resolved_path)
-            if filename.endswith('.pt')
+            if filename.endswith(('.pt', '.npz'))
         )
         if len(instance_files) < episodes:
             raise ValueError(
-                'Not enough .pt files in {}: found {}, need {}'.format(
+                'Not enough .pt/.npz files in {}: found {}, need {}'.format(
                     resolved_path, len(instance_files), episodes
                 )
             )
-        instances = [_load_torch_file(filename) for filename in instance_files[:episodes]]
+        instances = [_load_instance_file(filename) for filename in instance_files[:episodes]]
         return torch.stack(instances, dim=0)
 
-    data = _load_torch_file(resolved_path)
+    data = _load_instance_file(resolved_path)
+    if data.dim() == 2:
+        data = data.unsqueeze(0)
     if data.size(0) < episodes:
         raise ValueError(
             'Not enough instances in {}: found {}, need {}'.format(

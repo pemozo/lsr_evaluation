@@ -166,6 +166,7 @@ def _apply_cli_args():
     parser.add_argument('--t-file', help='Full path to conquering checkpoint.')
     parser.add_argument('--p-file', help='Full path to dividing checkpoint.')
     parser.add_argument('--data-file', help='Full path test data.')
+    parser.add_argument('--episodes', type=int, help='Number of test instances to evaluate.')
     args = parser.parse_args()
 
     if args.t_file:
@@ -174,6 +175,8 @@ def _apply_cli_args():
         trainer_params['model_load']['p_file'] = args.p_file
     if args.data_file:
         trainer_params['data_load']['data_file'] = args.data_file
+    if args.episodes:
+        trainer_params['validation_test_episodes'] = args.episodes
 
 
 def _print_config():
