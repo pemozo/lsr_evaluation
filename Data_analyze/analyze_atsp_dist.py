@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASETS = {
     "matnet": ROOT / "data" / "ATSP_data" / "Matnet_atsp250_128instances",
     "udc": ROOT / "data" / "ATSP_data" / "UDC_atsp250_128instances",
-    "ctrl": ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data1",
+    "ctrl": ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data18",
     "rrnco": (
         ROOT
         / "data"

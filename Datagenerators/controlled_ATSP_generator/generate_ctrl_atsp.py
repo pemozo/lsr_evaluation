@@ -11,8 +11,8 @@ problem_gen_params = {
     "int_min": 1,
     "int_max": 1_000_000,
     "scaler": 1_000_000,
-    "lambda_asym": 0.30,
-    "affected_fraction": 0.2,
+    "lambda_asym": 0.75,
+    "affected_fraction": 0.75,
     "q_mode": "constant",  # "constant" or "uniform"
     "q_value": 1.0,
     "q_min": 0.2,  # used only for q_mode="uniform"
@@ -20,17 +20,17 @@ problem_gen_params = {
     "placement_mode": "random",
     "direction_mode": "random",
     "seed": 42,
-    "target_triangle_violation_rate": None,
+    "target_triangle_violation_rate": 0.15,
     "triangle_violation_tolerance": 0.01,
     "triangle_violation_eps": 1e-7,
-    "enforce_triangle_inequality": True,
+    "enforce_triangle_inequality": False,
 }
 
 num_instances = 64
 node_cnt = 250
 
 ROOT = Path(__file__).resolve().parents[2]
-output_dir = ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data1"
+output_dir = ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data18"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 

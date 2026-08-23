@@ -14,6 +14,7 @@ results_atsp250/
 **/data/
 **/result/
 **/results_atsp250/
+**/locality_results/
 *.ckpt
 *.pt
 *.pth
@@ -28,6 +29,7 @@ Third_party/H-TSP/run_htsp.slurm
 slurm_logs/
 **/slurm_logs/
 *.slurm
+!Third_party/UDC-Large-scale-CO-master/run_locality_experiment.slurm
 
 # Docker files
 Docker/
