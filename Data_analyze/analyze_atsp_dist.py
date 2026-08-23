@@ -1,9 +1,10 @@
 from pathlib import Path
 import argparse
 import math
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,44 +12,57 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASETS = {
     "matnet": ROOT / "data" / "ATSP_data" / "Matnet_atsp250_128instances",
     "udc": ROOT / "data" / "ATSP_data" / "UDC_atsp250_128instances",
-    "ctrl": ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data",
-    "rrnco": ROOT
-    / "data"
-    / "ATSP_data"
-    / "RRNCO_atsp250_64instances"
-    / "atsp_n250_64_data",
+    "ctrl": ROOT / "data" / "ATSP_data" / "Ctrl_ATSP_data1",
+    "rrnco": (
+        ROOT
+        / "data"
+        / "ATSP_data"
+        / "RRNCO_atsp250_64instances"
+        / "atsp_n250_64_data"
+    ),
 }
 
 
-def choose_dataset():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", choices=DATASETS.keys())
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    if args.dataset:
-        return args.dataset, DATASETS[args.dataset]
 
-    dataset_names = list(DATASETS.keys())
+def choose_dataset(dataset_name=None):
+    if dataset_name:
+        return dataset_name, DATASETS[dataset_name]
+
+    names = list(DATASETS)
     print("Available datasets:")
-    for idx, name in enumerate(dataset_names, start=1):
-        print(f"{idx}: {name} ({DATASETS[name]})")
+    for index, name in enumerate(names, start=1):
+        print(f"{index}: {name} ({DATASETS[name]})")
 
     while True:
         choice = input("Choose dataset: ").strip().lower()
-
         if choice in DATASETS:
             return choice, DATASETS[choice]
-
-        if choice.isdigit():
-            idx = int(choice)
-            if 1 <= idx <= len(dataset_names):
-                name = dataset_names[idx - 1]
-                return name, DATASETS[name]
-
+        if choice.isdigit() and 1 <= int(choice) <= len(names):
+            name = names[int(choice) - 1]
+            return name, DATASETS[name]
         print("Invalid dataset selection.")
 
 
-def load_matrix_file(path: Path):
+def find_data_files(data_directory):
+    if not data_directory.exists():
+        raise FileNotFoundError(f"Directory {data_directory} does not exist.")
+
+    files = sorted(
+        path
+        for pattern in ("*.pt", "*.npz")
+        for path in data_directory.glob(pattern)
+    )
+    if not files:
+        raise FileNotFoundError(f"No .pt or .npz files found in {data_directory}.")
+    return files
+
+
+def load_matrix_file(path):
     if path.suffix == ".pt":
         loaded = torch.load(path, map_location="cpu")
         if isinstance(loaded, torch.Tensor):
@@ -67,165 +81,362 @@ def load_matrix_file(path: Path):
     raise ValueError(f"{path.name}: unsupported file type {path.suffix}")
 
 
-def asymmetry_decomposition(D: torch.Tensor, eps: float = 1e-12):
-
-    if D.ndim != 2 or D.shape[0] != D.shape[1]:
-        raise ValueError(f"Expected a square 2D matrix, got shape {tuple(D.shape)}")
-
-    D = D.to(dtype=torch.float64)
-    n = D.shape[0]
-
-    K = 0.5 * (D - D.T)
-
-    p = K.sum(dim=1) / n
-    p = p - p.mean()
-
-    G = p[:, None] - p[None, :]
-    R = K - G
-
-    k_energy = torch.sum(K * K).item()
-    g_energy = torch.sum(G * G).item()
-    r_energy = torch.sum(R * R).item()
-    d_energy = torch.sum(D * D).item()
-
-    if k_energy <= eps:
-        rho = math.nan
-        potential_share = math.nan
-    else:
-        rho = r_energy / k_energy
-        potential_share = g_energy / k_energy
-
-        if -1e-12 < rho < 0:
-            rho = 0.0
-        elif 1 < rho < 1 + 1e-12:
-            rho = 1.0
-
-        if -1e-12 < potential_share < 0:
-            potential_share = 0.0
-        elif 1 < potential_share < 1 + 1e-12:
-            potential_share = 1.0
-
-    if d_energy <= eps:
-        rel_asymmetry = math.nan
-        rel_circulation = math.nan
-    else:
-        rel_asymmetry = math.sqrt(k_energy / d_energy)
-        rel_circulation = math.sqrt(r_energy / d_energy)
-
-    decomposition_error = abs(k_energy - (g_energy + r_energy))
-    tolerance = 1e-9 * max(1.0, k_energy)
-    if decomposition_error > tolerance:
-        print(
-            "Warning: ||K||_F^2 != ||G||_F^2 + ||R||_F^2 within tolerance: "
-            f"error={decomposition_error:.3e}"
-        )
-
-    return rho, potential_share, rel_asymmetry, rel_circulation, n
-
-
-def iter_square_matrices(tensor: torch.Tensor):
+def iter_square_matrices(tensor):
     if not isinstance(tensor, torch.Tensor):
         raise TypeError(f"Expected torch.Tensor, got {type(tensor).__name__}")
-
     if tensor.ndim < 2 or tensor.shape[-1] != tensor.shape[-2]:
         raise ValueError(f"Expected [..., n, n], got shape {tuple(tensor.shape)}")
 
-    n = tensor.shape[-1]
+    size = tensor.shape[-1]
     if tensor.ndim == 2:
         yield tensor
     else:
-        for matrix in tensor.reshape(-1, n, n):
-            yield matrix
+        yield from tensor.reshape(-1, size, size)
 
 
-dataset_name, DATA_DIR = choose_dataset()
+def clamp_unit_roundoff(value):
+    if -1e-12 < value < 0.0:
+        return 0.0
+    if 1.0 < value < 1.0 + 1e-12:
+        return 1.0
+    return value
 
-if not DATA_DIR.exists():
-    print(f"Directory {DATA_DIR} does not exist.")
-    raise SystemExit(1)
 
-data_files = sorted(
-    file
-    for pattern in ("*.pt", "*.npz")
-    for file in DATA_DIR.glob(pattern)
-)
-if not data_files:
-    print(f"No .pt or .npz files found in {DATA_DIR}.")
-    raise SystemExit(1)
+def asymmetry_decomposition(matrix, eps=1e-12):
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError(f"Expected a square 2D matrix, got shape {tuple(matrix.shape)}")
 
-print(f"Analyzing dataset: {dataset_name}")
-print(f"Files: {len(data_files)}")
+    matrix = matrix.to(dtype=torch.float64)
+    size = matrix.shape[0]
+    skew = 0.5 * (matrix - matrix.T)
+    potential = skew.sum(dim=1) / size
+    potential = potential - potential.mean()
+    gradient = potential[:, None] - potential[None, :]
+    residual = skew - gradient
 
-all_values = []
-rhos = []
-potential_shares = []
-rel_asymmetries = []
-rel_circulations = []
-instance_sizes = []
-num_symmetric = 0
+    skew_energy = torch.sum(skew * skew).item()
+    gradient_energy = torch.sum(gradient * gradient).item()
+    residual_energy = torch.sum(residual * residual).item()
+    matrix_energy = torch.sum(matrix * matrix).item()
 
-for data_file in data_files:
-    loaded = load_matrix_file(data_file)
+    if skew_energy <= eps:
+        rho = math.nan
+        potential_share = math.nan
+    else:
+        rho = clamp_unit_roundoff(residual_energy / skew_energy)
+        potential_share = clamp_unit_roundoff(gradient_energy / skew_energy)
 
-    all_values.append(loaded.float().flatten())
+    if matrix_energy <= eps:
+        relative_asymmetry = math.nan
+        relative_circulation = math.nan
+    else:
+        relative_asymmetry = math.sqrt(skew_energy / matrix_energy)
+        relative_circulation = math.sqrt(residual_energy / matrix_energy)
 
-    for D in iter_square_matrices(loaded):
-        rho, potential_share, rel_asymmetry, rel_circulation, n = (
-            asymmetry_decomposition(D)
+    error = abs(skew_energy - gradient_energy - residual_energy)
+    tolerance = 1e-9 * max(1.0, skew_energy)
+    if error > tolerance:
+        print(
+            "Warning: ||K||_F^2 != ||G||_F^2 + ||R||_F^2 within tolerance: "
+            f"error={error:.3e}"
         )
 
-        if math.isnan(rho):
-            num_symmetric += 1
-        else:
-            rhos.append(rho)
-            potential_shares.append(potential_share)
+    return rho, potential_share, relative_asymmetry, relative_circulation
 
-        if not math.isnan(rel_asymmetry):
-            rel_asymmetries.append(rel_asymmetry)
-        if not math.isnan(rel_circulation):
-            rel_circulations.append(rel_circulation)
 
-        instance_sizes.append(n)
+def compute_pair_asymmetry_metrics(matrix, eps=1e-12):
+    if matrix.shape[0] < 2:
+        return math.nan, math.nan
 
-all_values = torch.cat(all_values)
+    matrix = matrix.to(dtype=torch.float64)
+    size = matrix.shape[0]
+    upper = torch.triu_indices(size, size, offset=1, device=matrix.device)
+    forward = matrix[upper[0], upper[1]]
+    reverse = matrix[upper[1], upper[0]]
+    pair_asymmetry_share = torch.mean(
+        (torch.abs(forward - reverse) > eps).to(torch.float64)
+    ).item()
 
-plt.figure(figsize=(10, 6))
-plt.hist(all_values.numpy(), bins=1000, density=True)
-plt.xlabel("Value")
-plt.ylabel("Density")
-plt.title("Distribution of all values across all ATSP instances")
-plt.grid(alpha=0.3)
-plt.tight_layout()
-plt.show()
+    centered_forward = forward - forward.mean()
+    centered_reverse = reverse - reverse.mean()
+    denominator = torch.linalg.vector_norm(
+        centered_forward
+    ) * torch.linalg.vector_norm(centered_reverse)
+    if denominator.item() <= eps:
+        reverse_correlation = math.nan
+    else:
+        reverse_correlation = (
+            torch.dot(centered_forward, centered_reverse) / denominator
+        ).item()
 
-if rel_asymmetries:
+    return pair_asymmetry_share, reverse_correlation
+
+
+def compute_triangle_inequality_metrics(matrix, eps=1e-12):
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError(f"Expected a square 2D matrix, got shape {tuple(matrix.shape)}")
+
+    size = matrix.shape[0]
+    total_triples = size * (size - 1) * (size - 2)
+    if total_triples == 0:
+        return 0, math.nan, math.nan, math.nan
+
+    matrix = matrix.to(dtype=torch.float64)
+    different_endpoints = ~torch.eye(size, dtype=torch.bool, device=matrix.device)
+    violation_count = 0
+    relative_strength_sum = 0.0
+    relative_strength_count = 0
+    relative_strength_max = math.nan
+    zero_rhs_violations = 0
+
+    for via in range(size):
+        relevant = different_endpoints.clone()
+        relevant[via, :] = False
+        relevant[:, via] = False
+
+        direct = matrix
+        indirect = matrix[:, via, None] + matrix[via, None, :]
+        violations = relevant & (direct > indirect + eps)
+        current_count = int(violations.sum().item())
+        if current_count == 0:
+            continue
+
+        violation_count += current_count
+        direct_values = direct[violations]
+        indirect_values = indirect[violations]
+        finite_denominator = torch.abs(indirect_values) > eps
+        zero_rhs_violations += current_count - int(finite_denominator.sum().item())
+
+        if torch.any(finite_denominator):
+            strengths = (
+                direct_values[finite_denominator]
+                - indirect_values[finite_denominator]
+            ) / indirect_values[finite_denominator]
+            relative_strength_sum += strengths.sum().item()
+            relative_strength_count += int(strengths.numel())
+            current_max = strengths.max().item()
+            if math.isnan(relative_strength_max) or current_max > relative_strength_max:
+                relative_strength_max = current_max
+
+    violation_share = violation_count / total_triples
+    if violation_count == 0:
+        return violation_count, violation_share, math.nan, math.nan
+    if zero_rhs_violations:
+        return violation_count, violation_share, math.inf, math.inf
+
+    relative_strength_mean = relative_strength_sum / relative_strength_count
+    return violation_count, violation_share, relative_strength_mean, relative_strength_max
+
+
+def analyze_files(data_files):
+    metrics = {
+        "rho": [],
+        "potential_share": [],
+        "relative_asymmetry": [],
+        "relative_circulation": [],
+        "pair_asymmetry_share": [],
+        "reverse_correlation": [],
+        "triangle_violation_count": [],
+        "triangle_violation_share": [],
+        "triangle_relative_violation_strength_mean": [],
+        "triangle_relative_violation_strength_max": [],
+    }
+    all_values = []
+    instance_count = 0
+    symmetric_count = 0
+
+    for data_file in data_files:
+        loaded = load_matrix_file(data_file)
+        for matrix in iter_square_matrices(loaded):
+            matrix = matrix.to(dtype=torch.float64)
+            all_values.append(matrix.flatten())
+            instance_count += 1
+
+            rho, potential_share, relative_asymmetry, relative_circulation = (
+                asymmetry_decomposition(matrix)
+            )
+            if math.isnan(rho):
+                symmetric_count += 1
+            else:
+                metrics["rho"].append(rho)
+                metrics["potential_share"].append(potential_share)
+
+            pair_asymmetry_share, reverse_correlation = (
+                compute_pair_asymmetry_metrics(matrix)
+            )
+            (
+                triangle_violation_count,
+                triangle_violation_share,
+                triangle_strength_mean,
+                triangle_strength_max,
+            ) = compute_triangle_inequality_metrics(matrix)
+
+            values = {
+                "relative_asymmetry": relative_asymmetry,
+                "relative_circulation": relative_circulation,
+                "pair_asymmetry_share": (
+                    pair_asymmetry_share
+                    if not math.isnan(relative_asymmetry)
+                    else math.nan
+                ),
+                "reverse_correlation": reverse_correlation,
+                "triangle_violation_count": triangle_violation_count,
+                "triangle_violation_share": triangle_violation_share,
+                "triangle_relative_violation_strength_mean": triangle_strength_mean,
+                "triangle_relative_violation_strength_max": triangle_strength_max,
+            }
+            for name, value in values.items():
+                if not math.isnan(value):
+                    metrics[name].append(value)
+
+    return torch.cat(all_values), metrics, instance_count, symmetric_count
+
+
+def plot_distribution(values, xlabel, title, bins=50, xlim=None):
+    values = np.asarray(values, dtype=np.float64)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        print(f"No values to plot: {title}")
+        return
+
+    histogram_range = xlim
+    if histogram_range is None:
+        minimum = values.min()
+        maximum = values.max()
+        scale = max(abs(minimum), abs(maximum), 1.0)
+        if maximum - minimum <= np.finfo(np.float64).eps * scale * bins:
+            center = 0.5 * (minimum + maximum)
+            padding = max(0.05 * abs(center), 0.5)
+            histogram_range = (center - padding, center + padding)
+
     plt.figure(figsize=(10, 6))
-    plt.hist(rel_asymmetries, bins=50, density=True)
-    plt.xlim(0.0, 1.0)
-    plt.xlabel(r"$A(D) = \|K\|_F / \|D\|_F$")
+    plt.hist(values, bins=bins, range=histogram_range, density=True)
+    if xlim is not None:
+        plt.xlim(*xlim)
+    plt.xlabel(xlabel)
     plt.ylabel("Density")
-    plt.title("Distribution of relative asymmetry across ATSP instances")
+    plt.title(title)
     plt.grid(alpha=0.3)
     plt.tight_layout()
+
+
+def plot_asymmetry_scatter(pair_shares, relative_asymmetries):
+    if not pair_shares:
+        print("No pairwise-asymmetry scatter values to plot.")
+        return
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(pair_shares, relative_asymmetries, alpha=0.75)
+    plt.xlim(0.0, 1.0)
+    plt.ylim(0.0, 1.0)
+    plt.xlabel(r"$P_{asym} = N_{asym} / (n(n-1)/2)$")
+    plt.ylabel(r"$A(D) = \|K\|_F / \|D\|_F$")
+    plt.title("Pairwise asymmetry share vs. global Frobenius asymmetry")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+
+
+def print_metric_summary(label, values, statistics=("mean",)):
+    if not values:
+        return
+
+    tensor = torch.tensor(values, dtype=torch.float64)
+    functions = {
+        "mean": torch.mean,
+        "median": torch.median,
+        "min": torch.min,
+        "max": torch.max,
+    }
+    for statistic in statistics:
+        value = functions[statistic](tensor).item()
+        print(f"{label} {statistic}: {value:.6f}")
+
+
+def create_plots(all_values, metrics):
+    plot_distribution(
+        all_values.numpy(),
+        "Value",
+        "Distribution of all values across all ATSP instances",
+        bins=1000,
+    )
+    plot_distribution(
+        metrics["relative_asymmetry"],
+        r"$A(D) = \|K\|_F / \|D\|_F$",
+        "Distribution of relative asymmetry across ATSP instances",
+        xlim=(0.0, 1.0),
+    )
+    plot_asymmetry_scatter(
+        metrics["pair_asymmetry_share"], metrics["relative_asymmetry"]
+    )
+    plot_distribution(
+        metrics["reverse_correlation"],
+        r"$\rho_{reverse} = corr(c_{ij}, c_{ji})$",
+        "Distribution of reverse cost correlation across ATSP instances",
+        xlim=(-1.0, 1.0),
+    )
+    plot_distribution(
+        metrics["triangle_violation_share"],
+        r"$N_{viol} / (n(n-1)(n-2))$",
+        "Distribution of triangle inequality violation rates",
+        xlim=(0.0, 1.0),
+    )
     plt.show()
-else:
-    print("No relative-asymmetry values to plot.")
 
-num_instances = len(instance_sizes)
-print(f"Number of matrices: {num_instances}")
-print(f"Symmetric matrices (rho undefined): {num_symmetric}")
 
-if rhos:
-    rho_t = torch.tensor(rhos, dtype=torch.float64)
-    print(f"rho mean:   {rho_t.mean().item():.6f}")
-    print(f"rho median: {rho_t.median().item():.6f}")
-    print(f"rho min:    {rho_t.min().item():.6f}")
-    print(f"rho max:    {rho_t.max().item():.6f}")
+def print_summary(metrics, instance_count, symmetric_count):
+    print(f"Number of matrices: {instance_count}")
+    print(f"Symmetric matrices (rho undefined): {symmetric_count}")
+    print_metric_summary(
+        "rho", metrics["rho"], statistics=("mean", "median", "min", "max")
+    )
+    print_metric_summary("potential share ||G||_F^2/||K||_F^2", metrics["potential_share"])
+    print_metric_summary(
+        "relative asymmetry ||K||_F/||D||_F", metrics["relative_asymmetry"]
+    )
+    print_metric_summary(
+        "pairwise asymmetry share", metrics["pair_asymmetry_share"]
+    )
+    print_metric_summary("reverse correlation", metrics["reverse_correlation"])
+    print_metric_summary(
+        "relative circulation ||R||_F/||D||_F", metrics["relative_circulation"]
+    )
+    print_metric_summary(
+        "triangle inequality violation count",
+        metrics["triangle_violation_count"],
+        statistics=("mean", "median", "min", "max"),
+    )
+    print_metric_summary(
+        "triangle inequality violation share",
+        metrics["triangle_violation_share"],
+        statistics=("mean", "median", "min", "max"),
+    )
+    print_metric_summary(
+        "relative triangle violation strength mean",
+        metrics["triangle_relative_violation_strength_mean"],
+        statistics=("mean", "median", "min", "max"),
+    )
+    print_metric_summary(
+        "relative triangle violation strength max",
+        metrics["triangle_relative_violation_strength_max"],
+        statistics=("mean", "median", "min", "max"),
+    )
 
-if rel_asymmetries:
-    a_t = torch.tensor(rel_asymmetries, dtype=torch.float64)
-    print(f"relative asymmetry ||K||_F/||D||_F mean: {a_t.mean().item():.6f}")
 
-if rel_circulations:
-    c_t = torch.tensor(rel_circulations, dtype=torch.float64)
-    print(f"relative circulation ||R||_F/||D||_F mean: {c_t.mean().item():.6f}")
+def main():
+    args = parse_args()
+    dataset_name, data_directory = choose_dataset(args.dataset)
+
+    try:
+        data_files = find_data_files(data_directory)
+    except FileNotFoundError as error:
+        raise SystemExit(error) from error
+
+    print(f"Analyzing dataset: {dataset_name}")
+    print(f"Files: {len(data_files)}")
+    all_values, metrics, instance_count, symmetric_count = analyze_files(data_files)
+    print_summary(metrics, instance_count, symmetric_count)
+    create_plots(all_values, metrics)
+
+
+if __name__ == "__main__":
+    main()

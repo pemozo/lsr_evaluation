@@ -7,14 +7,17 @@ datasets/
 ATSP_data/
 RRNCO_data/
 data/
-data/
+result/
 **/checkpoints/
 **/datasets/
 **/data/
+**/result/
 *.ckpt
 *.pt
 *.pth
 *.pkl
+results_table.xlsx
+~$results_table.xlsx
 __pycache__/
 **/__pycache__/
 
