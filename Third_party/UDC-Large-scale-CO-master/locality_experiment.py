@@ -23,7 +23,7 @@ import numpy as np
 import torch
 
 
-TARGET_N = 64
+TARGET_N = 250
 DEFAULT_K_VALUES = (1, 2, 4, 8, 16)
 DATASET_PATHS = {
     "ctrl_atsp_data": Path("data/ATSP_data/Ctrl_ATSP_data"),
@@ -176,7 +176,7 @@ def parse_args(argv=None):
     default_project_root = script_dir.parents[1]
     parser = argparse.ArgumentParser(
         description=(
-            "Solve common 64-node matrices with LKH-3 and measure KNN locality "
+            "Solve common 250-node matrices with LKH-3 and measure KNN locality "
             "inside offset-averaged tour segments."
         )
     )
@@ -192,15 +192,6 @@ def parse_args(argv=None):
     parser.add_argument("--rrnco-path", type=Path)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--instances", type=int, default=64)
-    parser.add_argument(
-        "--node-selection",
-        choices=("strict", "first", "random"),
-        default="strict",
-        help=(
-            "How to obtain N=64 when a source matrix is larger. 'strict' rejects "
-            "non-64 matrices; 'random' uses a reproducible induced submatrix."
-        ),
-    )
     parser.add_argument(
         "--segment-size",
         type=int,
@@ -310,7 +301,8 @@ def resolve_segment_size(args):
     if TARGET_N % segment_size != 0:
         raise ValueError(
             f"N={TARGET_N} is not divisible by segment size {segment_size} ({source}). "
-            "Unequal remainder segments are disabled; supply a divisor of 64 via --segment-size."
+            f"Unequal remainder segments are disabled; supply a divisor of {TARGET_N} "
+            "via --segment-size."
         )
     return segment_size, discovered, sources, source
 
@@ -413,32 +405,21 @@ def validate_source_matrix(matrix, source):
     return matrix
 
 
-def select_nodes(matrix, metadata, args, instance_index, source):
+def use_full_matrix(matrix, metadata, source):
     source_n = matrix.shape[0]
-    if source_n == TARGET_N:
-        indices = np.arange(TARGET_N, dtype=np.int64)
-        selection_seed = None
-    elif args.node_selection == "strict":
+    if source_n != TARGET_N:
         raise ValueError(
             f"{source} has shape {matrix.shape}, not ({TARGET_N}, {TARGET_N}). "
-            "The current datasets contain 250-node instances. Select an explicit "
-            "in-memory policy with --node-selection first or --node-selection random."
+            "This experiment requires all 250 nodes and does not perform node sampling."
         )
-    elif args.node_selection == "first":
-        indices = np.arange(TARGET_N, dtype=np.int64)
-        selection_seed = None
-    else:
-        selection_seed = args.seed + instance_index
-        rng = np.random.default_rng(selection_seed)
-        indices = np.sort(rng.choice(source_n, size=TARGET_N, replace=False)).astype(np.int64)
-
-    matrix_64 = matrix[np.ix_(indices, indices)].copy()
+    indices = np.arange(TARGET_N, dtype=np.int64)
+    target_matrix = matrix.copy()
     original_ids = indices.copy()
     if "node_indices" in metadata:
         candidate = np.asarray(metadata["node_indices"]).reshape(-1)
         if candidate.size == source_n:
             original_ids = candidate[indices].astype(np.int64, copy=False)
-    return matrix_64, indices, original_ids, selection_seed
+    return target_matrix, indices, original_ids
 
 
 def resolve_dataset_paths(args):
@@ -459,9 +440,7 @@ def prepare_instances(args, dataset_paths):
         dataset_instances = []
         for index, instance_id, source, raw_matrix, metadata in iter_source_matrices(path, args.instances):
             raw_matrix = validate_source_matrix(raw_matrix, source)
-            matrix, selected, original_ids, selection_seed = select_nodes(
-                raw_matrix, metadata, args, index, source
-            )
+            matrix, selected, original_ids = use_full_matrix(raw_matrix, metadata, source)
             allclose = bool(np.allclose(matrix, matrix.T))
             symmetry_type = "symmetric" if allclose else "asymmetric"
             dataset_instances.append(
@@ -474,7 +453,7 @@ def prepare_instances(args, dataset_paths):
                     matrix=matrix,
                     selected_source_indices=selected,
                     selected_original_node_ids=original_ids,
-                    node_selection_seed=selection_seed,
+                    node_selection_seed=None,
                     symmetry_type=symmetry_type,
                     np_allclose_d_dt=allclose,
                 )
@@ -774,7 +753,7 @@ def analyze_instance(instance, args, segment_size, lkh_binary, output_dir):
         "source_file": str(instance.source_file),
         "source_dimension": instance.source_dimension,
         "N": TARGET_N,
-        "node_selection": "none" if instance.source_dimension == TARGET_N else args.node_selection,
+        "node_selection": "none (strict full matrix)",
         "node_selection_seed": instance.node_selection_seed,
         "selected_source_indices": json.dumps(instance.selected_source_indices.tolist()),
         "selected_original_node_ids": json.dumps(instance.selected_original_node_ids.tolist()),
@@ -1000,7 +979,7 @@ def build_final_report(args, segment_size, discovered_segment, lkh_binary, manif
         f"N                : {TARGET_N}",
         f"segment size     : {segment_size} (repository sub_size={discovered_segment})",
         f"K values         : {', '.join(str(k) for k in args.k_values)}",
-        f"node selection   : {args.node_selection}",
+        "node selection   : none (strict 250x250 full matrices)",
         f"LKH binary       : {lkh_binary}",
         f"LKH seed         : base {args.seed}; instance seed = base + instance_index",
         f"LKH RUNS         : {args.runs}",
@@ -1130,7 +1109,7 @@ def main(argv=None):
     print(f"K_VALUES={args.k_values}", flush=True)
     print(f"datasets={dataset_paths}", flush=True)
     print(f"instances_per_dataset={args.instances}", flush=True)
-    print(f"node_selection={args.node_selection}", flush=True)
+    print("node_selection=none; strict 250x250 full matrices", flush=True)
     print(f"incoming={args.incoming}", flush=True)
     print(f"LKH binary={lkh_binary}", flush=True)
     print(
@@ -1155,7 +1134,7 @@ def main(argv=None):
         "k_values": args.k_values,
         "datasets": {key: str(value) for key, value in dataset_paths.items()},
         "instances_per_dataset": args.instances,
-        "node_selection": args.node_selection,
+        "node_selection": "none (strict full matrix)",
         "incoming": args.incoming,
         "seed": args.seed,
         "bootstrap_samples": args.bootstrap_samples,

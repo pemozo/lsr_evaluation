@@ -28,7 +28,6 @@ LKH_BINARY="${LKH_BINARY:-/usr/local/bin/LKH}"
 
 INSTANCES="${INSTANCES:-64}"
 SEGMENT_SIZE="${SEGMENT_SIZE:-}"
-NODE_SELECTION="${NODE_SELECTION:-random}"
 K_VALUES="${K_VALUES:-1 2 4 8 16}"
 EXPERIMENT_SEED="${EXPERIMENT_SEED:-1234}"
 BOOTSTRAP_SAMPLES="${BOOTSTRAP_SAMPLES:-10000}"
@@ -67,8 +66,8 @@ echo "LKH MAX_TRIALS      : ${LKH_MAX_TRIALS:-2*N (resolved by Python)}"
 echo "LKH scale           : ${LKH_SCALE}"
 echo "experiment seed     : ${EXPERIMENT_SEED}"
 echo "instances/dataset   : ${INSTANCES}"
-echo "segment size        : ${SEGMENT_SIZE:-repository discovery (currently 50; invalid for N=64)}"
-echo "node selection      : ${NODE_SELECTION}"
+echo "segment size        : ${SEGMENT_SIZE:-repository discovery (50)}"
+echo "node selection      : none; strict 250x250 matrices required"
 echo "K values            : ${K_VALUES}"
 echo "bootstrap samples   : ${BOOTSTRAP_SAMPLES}"
 echo "parallel workers    : ${WORKERS}"
@@ -88,7 +87,6 @@ srun --cpu-bind=cores apptainer exec \
         --matnet-path "${MATNET_DATA_PATH}" \
         --rrnco-path "${RRNCO_DATA_PATH}" \
         --instances "${INSTANCES}" \
-        --node-selection "${NODE_SELECTION}" \
         --k-values "${K_VALUE_ARGS[@]}" \
         --incoming auto \
         --seed "${EXPERIMENT_SEED}" \

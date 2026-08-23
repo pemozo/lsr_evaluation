@@ -48,8 +48,8 @@ class LocalityExperimentTests(unittest.TestCase):
         return {
             "tour": np.asarray(tour),
             "lkh_seed": 1234,
-            "lkh_objective": 64.0,
-            "lkh_scaled_objective": 64_000_000,
+            "lkh_objective": float(locality.TARGET_N),
+            "lkh_scaled_objective": locality.TARGET_N * 1_000_000,
             "lkh_runtime_seconds": 0.1,
             "lkh_problem_type": "ATSP",
         }
@@ -74,13 +74,13 @@ class LocalityExperimentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch.object(locality, "solve_instance", return_value=self.solved(np.arange(n))):
                 _, original, _, _ = locality.analyze_instance(
-                    instance, args, 16, "unused", Path(temp_dir)
+                    instance, args, 50, "unused", Path(temp_dir)
                 )
             with patch.object(
                 locality, "solve_instance", return_value=self.solved(np.roll(np.arange(n), 11))
             ):
                 _, rotated, _, _ = locality.analyze_instance(
-                    instance, args, 16, "unused", Path(temp_dir)
+                    instance, args, 50, "unused", Path(temp_dir)
                 )
 
         np.testing.assert_allclose(
@@ -125,7 +125,8 @@ class LocalityExperimentTests(unittest.TestCase):
         matrix[0, 1] = 2.0
         instance = self.make_instance(matrix)
         args = self.make_args()
-        expected_scaled = 65_000_000
+        expected_objective = float(n + 1)
+        expected_scaled = (n + 1) * 1_000_000
 
         def fake_lkh(command, cwd, **unused):
             work_dir = Path(cwd)
@@ -135,7 +136,7 @@ class LocalityExperimentTests(unittest.TestCase):
             problem_text = (work_dir / problem_name).read_text(encoding="ascii")
             self.assertIn("TYPE: ATSP", problem_text)
             self.assertIn("RUNS = 1", parameter_text)
-            self.assertIn("MAX_TRIALS = 128", parameter_text)
+            self.assertIn(f"MAX_TRIALS = {2 * n}", parameter_text)
             self.assertIn("SEED = 1234", parameter_text)
             nodes = "\n".join(str(node) for node in range(1, n + 1))
             (work_dir / tour_name).write_text(
@@ -149,7 +150,7 @@ class LocalityExperimentTests(unittest.TestCase):
             output_dir = Path(temp_dir)
             with patch.object(locality.subprocess, "run", side_effect=fake_lkh):
                 solved = locality.solve_instance(instance, args, "fake-LKH", output_dir)
-            self.assertAlmostEqual(solved["lkh_objective"], 65.0)
+            self.assertAlmostEqual(solved["lkh_objective"], expected_objective)
             self.assertEqual(solved["lkh_scaled_objective"], expected_scaled)
             self.assertFalse(any((output_dir / "work").iterdir()))
             self.assertTrue(any((output_dir / "lkh_logs" / "rrnco").iterdir()))
@@ -167,7 +168,6 @@ class LocalityExperimentTests(unittest.TestCase):
             bootstrap_samples=100,
             seed=1234,
             paired_comparisons=False,
-            node_selection="random",
             runs=1,
             max_trials=None,
             scale=1_000_000,
@@ -191,7 +191,7 @@ class LocalityExperimentTests(unittest.TestCase):
                             "locality_incoming": value + (0.005 if symmetry == "asymmetric" else 0.0),
                             "node_std_outgoing": 0.1,
                             "node_std_incoming": 0.1,
-                            "random_baseline": 15 / 63,
+                            "random_baseline": 49 / 249,
                         }
                     )
                     for node_id in range(locality.TARGET_N):
@@ -209,7 +209,7 @@ class LocalityExperimentTests(unittest.TestCase):
         summaries = locality.aggregate(instance_rows, node_rows, args)
         comparisons = locality.compare_datasets(instance_rows, args)
         report = locality.build_final_report(
-            args, 16, 50, "LKH", manifests, summaries, comparisons, elapsed=1.5
+            args, 50, 50, "LKH", manifests, summaries, comparisons, elapsed=1.5
         )
 
         self.assertEqual(len(summaries), 12)
