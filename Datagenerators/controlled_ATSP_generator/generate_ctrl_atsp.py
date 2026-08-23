@@ -12,7 +12,7 @@ problem_gen_params = {
     "int_max": 1_000_000,
     "scaler": 1_000_000,
     "lambda_asym": 0.30,
-    "affected_fraction": 0.25,
+    "affected_fraction": 0.2,
     "q_mode": "constant",  # "constant" or "uniform"
     "q_value": 1.0,
     "q_min": 0.2,  # used only for q_mode="uniform"

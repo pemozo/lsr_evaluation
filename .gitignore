@@ -8,10 +8,12 @@ ATSP_data/
 RRNCO_data/
 data/
 result/
+results_atsp250/
 **/checkpoints/
 **/datasets/
 **/data/
 **/result/
+**/results_atsp250/
 *.ckpt
 *.pt
 *.pth
