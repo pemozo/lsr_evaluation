@@ -13,9 +13,15 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-SLURM_LOG_DIR="${SCRIPT_DIR}/slurm_logs"
+PROJECT_DIR="${SLURM_SUBMIT_DIR}"
+REPO_DIR="$(cd "${PROJECT_DIR}/../.." && pwd)"
+SLURM_LOG_DIR="${PROJECT_DIR}/slurm_logs"
+
+if [[ ! -d "${SLURM_LOG_DIR}" ]]; then
+    echo "ERROR: Existing SLURM log directory not found: ${SLURM_LOG_DIR}" >&2
+    echo "Submit this script from Third_party/UDC-Large-scale-CO-master." >&2
+    exit 1
+fi
 
 IMAGE="${UDC_IMAGE:-/beegfs/${USER}/containers/udc-atsp_1.0.sif}"
 LKH_BINARY="${LKH_BINARY:-/usr/local/bin/LKH}"
@@ -38,7 +44,6 @@ RRNCO_DATA_PATH="${RRNCO_DATA_PATH:-/workspace/project/data/ATSP_data/RRNCO_atsp
 RUN_ID="${LOCALITY_RUN_ID:-${SLURM_JOB_ID}}"
 OUTPUT_DIR="/workspace/project/Third_party/UDC-Large-scale-CO-master/locality_results/${RUN_ID}"
 
-mkdir -p "${SLURM_LOG_DIR}"
 export OMP_NUM_THREADS=1
 
 read -r -a K_VALUE_ARGS <<< "${K_VALUES}"
