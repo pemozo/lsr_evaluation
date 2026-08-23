@@ -34,6 +34,7 @@ BOOTSTRAP_SAMPLES="${BOOTSTRAP_SAMPLES:-10000}"
 LKH_RUNS="${LKH_RUNS:-1}"
 LKH_MAX_TRIALS="${LKH_MAX_TRIALS:-}"
 LKH_SCALE="${LKH_SCALE:-1000000}"
+LKH_PRECISION="${LKH_PRECISION:-1}"
 WORKERS="${WORKERS:-${SLURM_CPUS_PER_TASK}}"
 
 CTRL_DATA_PATH="${CTRL_DATA_PATH:-/workspace/project/data/ATSP_data/Ctrl_ATSP_data}"
@@ -63,6 +64,7 @@ echo "image               : ${IMAGE}"
 echo "LKH binary          : ${LKH_BINARY}"
 echo "LKH RUNS            : ${LKH_RUNS}"
 echo "LKH MAX_TRIALS      : ${LKH_MAX_TRIALS:-2*N (resolved by Python)}"
+echo "LKH PRECISION       : ${LKH_PRECISION}"
 echo "LKH scale           : ${LKH_SCALE}"
 echo "experiment seed     : ${EXPERIMENT_SEED}"
 echo "instances/dataset   : ${INSTANCES}"
@@ -94,6 +96,7 @@ srun --cpu-bind=cores apptainer exec \
         --workers "${WORKERS}" \
         --lkh-binary "${LKH_BINARY}" \
         --runs "${LKH_RUNS}" \
+        --lkh-precision "${LKH_PRECISION}" \
         --scale "${LKH_SCALE}" \
         --output-dir "${OUTPUT_DIR}" \
         "${OPTIONAL_ARGS[@]}"

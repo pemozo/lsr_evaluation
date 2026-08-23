@@ -111,6 +111,7 @@ MANIFEST_FIELDS = [
     "np_allclose_D_DT",
     "symmetry_type",
     "lkh_seed",
+    "lkh_precision",
     "lkh_problem_type",
     "lkh_objective",
     "lkh_scaled_objective",
@@ -208,6 +209,12 @@ def parse_args(argv=None):
     parser.add_argument("--bootstrap-samples", type=int, default=10_000)
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--scale", type=int, default=1_000_000)
+    parser.add_argument(
+        "--lkh-precision",
+        type=int,
+        default=1,
+        help="LKH PRECISION. One is appropriate because matrices are already integer-scaled.",
+    )
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument(
         "--max-trials",
@@ -243,6 +250,8 @@ def parse_args(argv=None):
         parser.error("--workers must be at least 1")
     if args.scale < 1 or args.runs < 1:
         parser.error("--scale and --runs must be at least 1")
+    if args.lkh_precision < 1:
+        parser.error("--lkh-precision must be at least 1")
     if args.max_trials is not None and args.max_trials < 1:
         parser.error("--max-trials must be at least 1")
     args.k_values = list(dict.fromkeys(args.k_values))
@@ -480,11 +489,16 @@ def resolve_lkh_binary(value):
     return str(Path(binary).resolve()) if Path(binary).exists() else binary
 
 
-def scaled_matrix(matrix, scale, symmetric):
+def scaled_matrix(matrix, scale, symmetric, lkh_precision):
     lkh_matrix = (matrix + matrix.T) / 2.0 if symmetric else matrix
     scaled = np.rint(lkh_matrix * scale)
-    if scaled.max() > np.iinfo(np.int32).max:
-        raise OverflowError("A scaled edge weight exceeds the signed 32-bit integer range")
+    lkh_edge_limit = np.iinfo(np.int32).max // 2 // lkh_precision
+    if scaled.max() > lkh_edge_limit:
+        raise OverflowError(
+            f"Scaled edge weight {int(scaled.max())} exceeds LKH's limit "
+            f"INT_MAX/2/PRECISION={lkh_edge_limit} for PRECISION={lkh_precision}. "
+            "Reduce --scale or --lkh-precision."
+        )
     scaled = scaled.astype(np.int64)
     np.fill_diagonal(scaled, 0)
     return scaled
@@ -506,7 +520,7 @@ def write_problem(path, name, matrix, symmetric):
     return problem_type
 
 
-def write_parameter_file(path, problem_name, tour_name, runs, max_trials, seed):
+def write_parameter_file(path, problem_name, tour_name, runs, max_trials, seed, precision):
     path.write_text(
         "\n".join(
             [
@@ -515,6 +529,7 @@ def write_parameter_file(path, problem_name, tour_name, runs, max_trials, seed):
                 f"RUNS = {runs}",
                 f"MAX_TRIALS = {max_trials}",
                 f"SEED = {seed}",
+                f"PRECISION = {precision}",
                 "TRACE_LEVEL = 1",
                 "",
             ]
@@ -569,7 +584,9 @@ def solve_instance(instance, args, lkh_binary, output_dir):
     log_path = log_dir / f"{instance_name}.log"
 
     is_symmetric = instance.symmetry_type == "symmetric"
-    integer_matrix = scaled_matrix(instance.matrix, args.scale, is_symmetric)
+    integer_matrix = scaled_matrix(
+        instance.matrix, args.scale, is_symmetric, args.lkh_precision
+    )
     problem_type = write_problem(problem_path, instance_name, integer_matrix, is_symmetric)
     write_parameter_file(
         parameter_path,
@@ -578,6 +595,7 @@ def solve_instance(instance, args, lkh_binary, output_dir):
         args.runs,
         max_trials,
         lkh_seed,
+        args.lkh_precision,
     )
 
     started = time.perf_counter()
@@ -760,6 +778,7 @@ def analyze_instance(instance, args, segment_size, lkh_binary, output_dir):
         "np_allclose_D_DT": instance.np_allclose_d_dt,
         "symmetry_type": instance.symmetry_type,
         "lkh_seed": solved["lkh_seed"],
+        "lkh_precision": args.lkh_precision,
         "lkh_problem_type": solved["lkh_problem_type"],
         "lkh_objective": solved["lkh_objective"],
         "lkh_scaled_objective": solved["lkh_scaled_objective"],
@@ -984,6 +1003,7 @@ def build_final_report(args, segment_size, discovered_segment, lkh_binary, manif
         f"LKH seed         : base {args.seed}; instance seed = base + instance_index",
         f"LKH RUNS         : {args.runs}",
         f"LKH MAX_TRIALS   : {args.max_trials or 2 * TARGET_N}",
+        f"LKH PRECISION    : {args.lkh_precision}",
         f"integer scale    : {args.scale}",
         f"bootstrap        : {args.bootstrap_samples} samples; seed base {args.seed}",
         f"workers          : {args.workers}",
@@ -1114,7 +1134,8 @@ def main(argv=None):
     print(f"LKH binary={lkh_binary}", flush=True)
     print(
         f"LKH parameters: RUNS={args.runs}, MAX_TRIALS={args.max_trials or 2 * TARGET_N}, "
-        f"SEED_BASE={args.seed}, SCALE={args.scale}, TRACE_LEVEL=1",
+        f"SEED_BASE={args.seed}, PRECISION={args.lkh_precision}, "
+        f"SCALE={args.scale}, TRACE_LEVEL=1",
         flush=True,
     )
     print(
@@ -1142,6 +1163,7 @@ def main(argv=None):
         "lkh_binary": lkh_binary,
         "lkh_runs": args.runs,
         "lkh_max_trials": args.max_trials or 2 * TARGET_N,
+        "lkh_precision": args.lkh_precision,
         "integer_scale": args.scale,
         "paired_comparisons": args.paired_comparisons,
     }

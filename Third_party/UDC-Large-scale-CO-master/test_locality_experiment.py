@@ -38,6 +38,7 @@ class LocalityExperimentTests(unittest.TestCase):
             seed=1234,
             max_trials=None,
             scale=1_000_000,
+            lkh_precision=1,
             runs=1,
             keep_work=False,
             incoming="auto",
@@ -103,6 +104,14 @@ class LocalityExperimentTests(unittest.TestCase):
         self.assertIn("TYPE: ATSP", text)
         self.assertIn("0 1 2\n3 0 4\n5 6 0", text)
 
+    def test_lkh_precision_one_avoids_rrnco_weight_overflow(self):
+        matrix = np.zeros((locality.TARGET_N, locality.TARGET_N), dtype=np.float64)
+        matrix[0, 1] = 12.1025
+        scaled = locality.scaled_matrix(matrix, 1_000_000, symmetric=False, lkh_precision=1)
+        self.assertEqual(int(scaled.max()), 12_102_500)
+        with self.assertRaisesRegex(OverflowError, "INT_MAX/2/PRECISION"):
+            locality.scaled_matrix(matrix, 1_000_000, symmetric=False, lkh_precision=100)
+
     def test_tour_parser_validates_and_converts_indexing(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "tour.txt"
@@ -138,6 +147,7 @@ class LocalityExperimentTests(unittest.TestCase):
             self.assertIn("RUNS = 1", parameter_text)
             self.assertIn(f"MAX_TRIALS = {2 * n}", parameter_text)
             self.assertIn("SEED = 1234", parameter_text)
+            self.assertIn("PRECISION = 1", parameter_text)
             nodes = "\n".join(str(node) for node in range(1, n + 1))
             (work_dir / tour_name).write_text(
                 f"TYPE : TOUR\nCOMMENT : Length = {expected_scaled}\n"
@@ -171,6 +181,7 @@ class LocalityExperimentTests(unittest.TestCase):
             runs=1,
             max_trials=None,
             scale=1_000_000,
+            lkh_precision=1,
             workers=2,
         )
         instance_rows = []
